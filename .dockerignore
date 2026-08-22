@@ -1,0 +1,6 @@
+pennypilot-frontend/
+node_modules/
+.git/
+.idea/
+.vscode/
+*.log
