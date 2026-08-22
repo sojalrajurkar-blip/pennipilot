@@ -1,56 +1,57 @@
-# PennyPilot Deployment Guide (Render & Vercel)
+# PennyPilot Deployment Guide (Supabase + Render + Vercel)
 
-This repository contains setup for deploying:
-- **Backend (Spring Boot + PostgreSQL)** to [Render](https://render.com)
-- **Frontend (React + Vite)** to [Vercel](https://vercel.com)
+Architecture:
+- **Database**: [Supabase PostgreSQL](https://supabase.com)
+- **Backend**: [Render Web Service (Spring Boot Docker)](https://render.com)
+- **Frontend**: [Vercel (React + Vite SPA)](https://vercel.com)
 
 ---
 
-## 1. Backend Deployment on Render
+## 1. Supabase Database Setup
 
-### Method A: Using Render Blueprint (Recommended)
-1. Push this repository to GitHub.
-2. Log in to [Render Dashboard](https://dashboard.render.com/).
-3. Click **New +** -> **Blueprint**.
-4. Connect your `pennypilot` GitHub repository.
-5. Render will automatically detect `render.yaml` and set up:
-   - **PostgreSQL Database** (`pennypilot-db`)
-   - **Web Service** (`pennypilot-backend` using Docker)
-6. Once deployed, copy your backend URL (e.g. `https://pennypilot-backend.onrender.com`).
+1. Log in to [Supabase Dashboard](https://supabase.com/dashboard) and create a new project.
+2. Go to **Project Settings** -> **Database**.
+3. Under **Connection string** (URI / JDBC), get your credentials:
+   - **Host**: `db.<project-ref>.supabase.co`
+   - **Port**: `5432`
+   - **Database name**: `postgres`
+   - **User**: `postgres`
+   - **Password**: `<your-db-password>`
+4. Construct your JDBC connection string:
+   `jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require`
 
-### Method B: Manual Web Service Setup
-1. **Create PostgreSQL Database**:
-   - Go to Render -> **New +** -> **PostgreSQL**.
-   - Set Name: `pennypilot-db`, Database: `pennypilot`, User: `pennypilot`.
-   - Copy the **Internal Database URL** or connection credentials.
-2. **Create Web Service**:
-   - Render -> **New +** -> **Web Service**.
-   - Connect repository.
+---
+
+## 2. Backend Deployment on Render
+
+1. Log in to [Render Dashboard](https://dashboard.render.com/).
+2. Click **New +** -> **Web Service** (or **Blueprint** with `render.yaml`).
+3. Connect your GitHub repository `pennypilot`.
+4. Configure Web Service:
    - **Root Directory**: `pennypilot-backend`
-   - **Environment**: Docker (uses `Dockerfile`)
-   - **Environment Variables**:
-     - `CORS_ALLOWED_ORIGINS`: `https://your-vercel-app.vercel.app` (or `*`)
-     - `SPRING_DATASOURCE_URL`: `jdbc:postgresql://<db-host>:5432/pennypilot`
-     - `DB_USERNAME`: `<db-user>`
-     - `DB_PASSWORD`: `<db-password>`
+   - **Environment**: Docker
+5. Set the **Environment Variables**:
+   - `SPRING_DATASOURCE_URL`: `jdbc:postgresql://db.<project-ref>.supabase.co:5432/postgres?sslmode=require`
+   - `DB_USERNAME`: `postgres`
+   - `DB_PASSWORD`: `<your-supabase-password>`
+   - `CORS_ALLOWED_ORIGINS`: `https://*.vercel.app` (or your specific Vercel URL)
+   - `PORT`: `8080`
+6. Click **Deploy Web Service**. Flyway will automatically create all tables in Supabase on startup.
+7. Copy your deployed Render backend URL (e.g. `https://pennypilot-backend.onrender.com`).
 
 ---
 
-## 2. Frontend Deployment on Vercel
+## 3. Frontend Deployment on Vercel
 
 1. Log in to [Vercel Dashboard](https://vercel.com/dashboard).
-2. Click **Add New...** -> **Project**.
-3. Import your GitHub repository (`pennypilot`).
-4. Configure project settings:
-   - **Framework Preset**: Vite
-   - **Root Directory**: Select `pennypilot-frontend`
-5. Expand **Environment Variables**:
-   - Key: `VITE_API_BASE_URL`
-   - Value: `https://<your-render-backend-url>/api/v1` (e.g., `https://pennypilot-backend.onrender.com/api/v1`)
-6. Click **Deploy**.
+2. Click **Add New...** -> **Project** and import your GitHub repository.
+3. Select **Root Directory**: `pennypilot-frontend`.
+4. Add **Environment Variables**:
+   - `VITE_API_BASE_URL`: `https://<your-render-backend-url>/api/v1`
+5. Click **Deploy**.
 
 ---
 
-## Notes & SPA Routing
-- The frontend includes `pennypilot-frontend/vercel.json` to handle client-side routing (SPA fallback to `index.html`).
-- Backend CORS configuration dynamically reads `CORS_ALLOWED_ORIGINS` to allow communication from Vercel.
+## Technical Notes
+- **CORS**: `CorsConfig.java` in backend supports `CORS_ALLOWED_ORIGINS` dynamically.
+- **Routing**: `pennypilot-frontend/vercel.json` provides client-side SPA route rewrites.
