@@ -5,6 +5,13 @@ spring:
     url: ${SPRING_DATASOURCE_URL:${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pennypilot}}}
     username: ${DB_USERNAME:pennypilot}
     password: ${DB_PASSWORD:pennypilot}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 300000
+      max-lifetime: 600000
+      connection-timeout: 30000
+      validation-timeout: 5000
   jpa:
     hibernate:
       ddl-auto: validate   # schema is owned by Flyway, not Hibernate
