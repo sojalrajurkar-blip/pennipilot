@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: pennypilot-backend
+    env: docker
+    dockerfilePath: pennypilot-backend/Dockerfile
+    context: pennypilot-backend
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://*.vercel.app
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: pennypilot-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: pennypilot-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: pennypilot-db
+          property: password
+
+databases:
+  - name: pennypilot-db
+    plan: free
+    databaseName: pennypilot
+    user: pennypilot
